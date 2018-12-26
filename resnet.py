@@ -7,8 +7,8 @@ This is the resnet structure
 import numpy as np
 from hyper_parameters import *
 
-
 BN_EPSILON = 0.001
+
 
 def activation_summary(x):
     '''
@@ -29,7 +29,7 @@ def create_variables(name, shape, initializer=tf.contrib.layers.xavier_initializ
     layers.
     :return: The created variable
     '''
-    
+
     ## TODO: to allow different weight decay to fully connected layer and conv layer
     regularizer = tf.contrib.layers.l2_regularizer(scale=FLAGS.weight_decay)
 
@@ -62,9 +62,9 @@ def batch_normalization_layer(input_layer, dimension):
     '''
     mean, variance = tf.nn.moments(input_layer, axes=[0, 1, 2])
     beta = tf.get_variable('beta', dimension, tf.float32,
-                               initializer=tf.constant_initializer(0.0, tf.float32))
+                           initializer=tf.constant_initializer(0.0, tf.float32))
     gamma = tf.get_variable('gamma', dimension, tf.float32,
-                                initializer=tf.constant_initializer(1.0, tf.float32))
+                            initializer=tf.constant_initializer(1.0, tf.float32))
     bn_layer = tf.nn.batch_normalization(input_layer, mean, variance, beta, gamma, BN_EPSILON)
 
     return bn_layer
@@ -108,7 +108,6 @@ def bn_relu_conv_layer(input_layer, filter_shape, stride):
     return conv_layer
 
 
-
 def residual_block(input_layer, output_channel, first_block=False):
     '''
     Defines a residual block in ResNet
@@ -146,7 +145,7 @@ def residual_block(input_layer, output_channel, first_block=False):
         pooled_input = tf.nn.avg_pool(input_layer, ksize=[1, 2, 2, 1],
                                       strides=[1, 2, 2, 1], padding='VALID')
         padded_input = tf.pad(pooled_input, [[0, 0], [0, 0], [0, 0], [input_channel // 2,
-                                                                     input_channel // 2]])
+                                                                      input_channel // 2]])
     else:
         padded_input = input_layer
 
@@ -171,7 +170,7 @@ def inference(input_tensor_batch, n, reuse):
         layers.append(conv0)
 
     for i in range(n):
-        with tf.variable_scope('conv1_%d' %i, reuse=reuse):
+        with tf.variable_scope('conv1_%d' % i, reuse=reuse):
             if i == 0:
                 conv1 = residual_block(layers[-1], 16, first_block=True)
             else:
@@ -180,13 +179,13 @@ def inference(input_tensor_batch, n, reuse):
             layers.append(conv1)
 
     for i in range(n):
-        with tf.variable_scope('conv2_%d' %i, reuse=reuse):
+        with tf.variable_scope('conv2_%d' % i, reuse=reuse):
             conv2 = residual_block(layers[-1], 32)
             activation_summary(conv2)
             layers.append(conv2)
 
     for i in range(n):
-        with tf.variable_scope('conv3_%d' %i, reuse=reuse):
+        with tf.variable_scope('conv3_%d' % i, reuse=reuse):
             conv3 = residual_block(layers[-1], 64)
             layers.append(conv3)
         assert conv3.get_shape().as_list()[1:] == [8, 8, 64]
